@@ -17,62 +17,119 @@ library(TSstudio)
 library(ggplot2)
 library(tframePlus)
 library(rio)
+library(tseries)
 
+# Importing data
 setwd("C:/Users/ce pc/Dropbox/Mon Drive/Fac/S2/Applied macroeconometrics/Projet/Data")
-data_Unem <- read_excel("Harmonized unemployment rate - monthly.xlsx", skip=10)
-data_Unem
-data_oil <- read_excel("Crude Oil Price.xlsx", skip=10)
-data_oil
-data_GDP <- read_excel("données.xlsx")
-data_GDP
-
-
-dataGDP <- read_excel("GDP.xls", skip=10)
-
+data <- read_excel("données.xlsx")
+data_GDP <- read_excel("données.xlsx", sheet = "GDP_QUARTERLY")
 data <- data.frame(data)
-head(data)
+data_GDP <- data.frame(data_GDP)
 
-# Plotting time series
+# Plotting  monthly time series
 ts_brent <- ggplot(data,aes(x=observation_date, y=BRENT) ) + geom_line(color = "#00AFBB", size = 1)
 ts_brent
 
-ts_unemployment <- ggplot(data,aes(x=observation_date, y=Unemployment) ) + geom_line(color = "#00AFBB", size = 1)
+ts_unemployment <- ggplot(data,aes(x=observation_date, y=UNEMPLOYMENT)) + geom_line(color = "#00AFBB", size = 1)
 ts_unemployment
 
-ts_Core.HICP <- ggplot(data,aes(x=observation_date, y=Core.HICP) ) + geom_line(color = "#00AFBB", size = 1)
-ts_Core.HICP
+ts_Core_HICP <- ggplot(data,aes(x=observation_date, y=CORE_HICP)) + geom_line(color = "#00AFBB", size = 1)
+ts_Core_HICP
 
-ts_HICP <- ggplot(data,aes(x=observation_date, y=HICP) ) + geom_line(color = "#00AFBB", size = 1)
-ts_HICP
+ts_HICP_overall <- ggplot(data,aes(x=observation_date, y=HICP_OVERALL)) + geom_line(color = "#00AFBB", size = 1)
+ts_HICP_overall
 
-# Time Series
-ts_brent <- ts(data$BRENT, start = c(1997,5), end=c(2022,12), frequency=12)
+ts_HICP_energy <- ggplot(data,aes(x=observation_date, y=HICP_ENERGY)) + geom_line(color = "#00AFBB", size = 1)
+ts_HICP_energy
+
+ts_EURIBOR_3M <- ggplot(data,aes(x=observation_date, y=EURIBOR_3M)) + geom_line(color = "#00AFBB", size = 1)
+ts_EURIBOR_3M
+
+# Plotting quarterly time series
+ts_GDP_quart <- ggplot(data_GDP,aes(x=observation_date, y=GDP)) + geom_line(color = "#00AFBB", size = 1)
+ts_GDP_quart
+
+# Time Series in quarterly
+ts_brent <- ts(data$BRENT, start = c(1999,3), end=c(2021,12), frequency=12)
 ts_brent <- as.quarterly(ts_brent, FUN=mean, na.rm=TRUE)
 
-ts_unemployment <- ts(data$Unemployment, start = c(1997,5), end=c(2022,12), frequency=12)
+ts_unemployment <- ts(data$UNEMPLOYMENT, start = c(1999,3), end=c(2021,12), frequency=12)
 ts_unemployment <- as.quarterly(ts_unemployment, FUN=mean, na.rm=TRUE)
 
+ts_Core_HICP <- ts(data$CORE_HICP, start = c(1999,3), end=c(2021,12), frequency=12)
+ts_Core_HICP <- as.quarterly(ts_Core_HICP, FUN=mean, na.rm=TRUE)
 
-ts_HICP <- ts(data$HICP, start = c(1997,5), end=c(2022,12), frequency=12)
-ts_HICP <- as.quarterly(ts_HICP, FUN=mean, na.rm=TRUE)
+ts_HICP_overall <- ts(data$HICP_OVERALL, start = c(1999,3), end=c(2021,12), frequency=12)
+ts_HICP_overall <- as.quarterly(ts_HICP_overall, FUN=mean, na.rm=TRUE)
 
-ts_GDP <- ts(dataGDP$EUNNGDP, start = c(1997,01), end=c(2022,12), frequency=4)
-ts_GDP
+ts_HICP_energy <- ts(data$HICP_ENERGY, start = c(1999,3), end=c(2021,12), frequency=12)
+ts_HICP_energy <- as.quarterly(ts_HICP_energy, FUN=mean, na.rm=TRUE)
 
-#corriger TS GDP
+ts_EURIBOR_3M <- ts(data$EURIBOR_3M, start = c(1999,3), end=c(2021,11), frequency=12)
+ts_EURIBOR_3M <- as.quarterly(ts_EURIBOR_3M, FUN=mean, na.rm=TRUE)
+
+ts_GDP <- ts(data_GDP, start = c(1999,10), end=c(2021,12), frequency=4)
+ts_GDP <- ts_GDP[,2]
+#ts_GDP_quart <- as.quarterly(ts_GDP_quart, FUN=mean, na.rm=TRUE)
+
+# ADF test
+adf.test(ts_brent) # Not-stationary
+adf.test(ts_unemployment) # Not-stationary
+adf.test(ts_Core_HICP) # Not-stationary
+adf.test(ts_HICP_overall)  # Not-stationary
+adf.test(ts_HICP_energy)  # Not-stationary
+adf.test(ts_EURIBOR_3M)  # Stationary
+adf.test(ts_GDP) # Not-stationary
+
+
+ts_brent_d=diff(ts_brent,lag=1,differences=1)
+ts_unemployment_d=diff(ts_unemployment,lag=1,differences=1)
+ts_Core_HICP_d=diff(ts_Core_HICP,lag=1,differences=1)
+ts_HICP_overall_d=diff(ts_HICP_overall,lag=1,differences=1)
+ts_HICP_energy_d=diff(ts_HICP_energy,lag=1,differences=1)
+ts_GDP_d=diff(ts_GDP,lag=1,differences=1)
+ts_EURIBOR_3M_d=diff(ts_EURIBOR_3M, lag=1,differences=1)
+
+
+
+
+
 # Setting restriction matrix:
-amat <- diag(4) # Identical matrix 4X4
+amat <- diag(7) # Identical matrix 4X4
 amat[2,1] <- NA
 amat[3,1] <- NA
 amat[3,2] <- NA
 amat[4,1] <- NA
-amat[4,2] <- NA
-amat[4,3]<- NA
-amat
+amat[5,1] <- NA
+amat[6,1] <- NA
+amat[7,1] <- NA
 
-svar <- cbind(ts_brent,ts_HICP,ts_unemployment, ts_GDP)
+amat[3,2] <- NA
+amat[4,2] <- NA
+amat[5,2] <- NA
+amat[6,2] <- NA
+amat[7,2] <- NA
+
+amat[4,3] <- NA
+amat[5,3] <- NA
+amat[6,3] <- NA
+amat[7,3] <- NA
+
+amat[5,4] <- NA
+amat[6,4] <- NA
+amat[7,4] <- NA
+
+amat[6,4] <- NA
+
+amat[6,5] <- NA
+amat[7,5] <- NA
+
+amat[6,7] <- NA
+
+# retaking EURIBOR 3M + refaire tourner => pb GDP
+svar <- cbind(ts_brent_d,ts_HICP_energy_d,ts_HICP_overall_d, ts_Core_HICP_d, ts_unemployment_d, ts_EURIBOR_3M)
 length
-colnames(svar) <- cbind("BRENT", "HICP", "Unemployment", "GDP")
+colnames(svar) <- cbind("BRENT", "HICP_energy", "HICP_overall", "HICP_Core", "Unemployment", "GDP", "Euribor3M")
 svar
 
 svar <- na.omit(svar) # à régler car missing comment justifier ???
